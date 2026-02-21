@@ -1,9 +1,10 @@
-import React, { Component } from 'react'
+import React, { Component, useState } from 'react'
 import { Text, View } from 'react-native'
 import styled from 'styled-components/native';
 import IconButton from './IconButton';
 import { images } from '../image';
 import PropTypes from 'prop-types';
+import Input from './input';
 
 //할 일 내용, 항목 삭제 버튼, 수정 버튼 구성
 
@@ -19,24 +20,61 @@ const Container = styled.View`
 const Contents = styled.Text`
   flex:1;
   font-size: 24px;
-  color: ${({theme}) => theme.text};
+  color: ${({theme, completed}) => (completed? theme.done : theme.text)};
+  text-decoration-line: ${({completed}) => completed ? 'line-through' : 'none'};
 `;
 
-const Task = ({text}) => {//할 일 내용 props로 전달
+const Task = ({item, deleteTask, toggleTask, updateTask}) => {//할 일 내용 props로 전달
 
-    return (
+    const [isEditing, setIsEditing] = useState(false);
+    const [text, setText] = useState(item.text);
+
+    const _handleUpdateButtonPress = () => {//수정상태 관리, 클릭하면 true 됨
+      setIsEditing(true);
+    };
+    const _onSubmitEditing = () => {
+      if(isEditing){ //클릭해서 true 되면 해당 객체의 text값을 수정함
+        const editedTask = Object.assign({}, item,{text});
+        setIsEditing(false); //수정후 다시 false 변환
+        updateTask(editedTask);
+      }
+    };
+
+    return isEditing ? (//눌러서 true 되면 input 띄움
+      <Input
+        value={text}
+        onChangeText={text => setText(text)}
+        onSubmitEditing={_onSubmitEditing}
+      />
+
+    ):(
       <Container>
-        <IconButton type={images.uncompleted}/>
-        <Contents>{text}</Contents>
-        <IconButton type={images.update}/>
-        <IconButton type={images.delete}/>
+        {/* item.completed의 값 true 또는 false에 따라 체크와 언체크 표시 */}
+        <IconButton 
+          type={item.completed? images.completed : images.uncompleted} 
+          id={item.id} 
+          onPressOut={toggleTask} 
+          completed={item.completed}
+        /> 
+
+        <Contents completed={item.completed}>{item.text}</Contents>
+        {item.completed || <IconButton type={images.update} onPressOut={_handleUpdateButtonPress}/>}
+        {/* completed값에 따라 update 버튼 렌더링 막기 */}
+        <IconButton 
+          type={images.delete} 
+          id={item.id} 
+          onPressOut={deleteTask} 
+          completed={item.completed}
+        />
       </Container>
     )
 
 }
 
 Task.proptype = {
-    text:PropTypes.string.isRequired
+    item:PropTypes.object.isRequired,
+    deleteTask:PropTypes.func.isRequired,
+    toggleTask:PropTypes.func.isRequired
 };
 
 export default Task;
