@@ -60,10 +60,13 @@ export default function App() {
     currentTasks[item.id] = item; 
     setTasks(currentTasks);
   }
-
   const _handleTextChange = text => {
     setNewTask(text);
   }
+  const _onBlur = () => {//빈값을 세팅함
+    setNewTask('');
+  }
+
   const width = Dimensions.get('window').width;
   return (
     <ThemeProvider theme={theme}>
@@ -78,6 +81,7 @@ export default function App() {
           value={newTask}
           onChangeText={_handleTextChange}
           onSubmitEditing={_addTask} 
+          onBlur={_onBlur}
           />
           {/* _addTask에 내용 작성시 newTaskObject로 ID키로 할일 내용을 세팅하고 newTaskObject 활용해서 Object의 value에 들어갈 tasks 세팅 */}
         <List width={width}>

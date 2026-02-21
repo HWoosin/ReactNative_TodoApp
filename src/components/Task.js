@@ -39,12 +39,19 @@ const Task = ({item, deleteTask, toggleTask, updateTask}) => {//할 일 내용 p
         updateTask(editedTask);
       }
     };
+    const _onBlur = () =>{
+      if(isEditing){
+        setIsEditing(false);
+        setText(item.text);//기존의 값 세팅
+      }
+    }
 
     return isEditing ? (//눌러서 true 되면 input 띄움
       <Input
         value={text}
         onChangeText={text => setText(text)}
         onSubmitEditing={_onSubmitEditing}
+        onBlur={_onBlur}//포커스 잃으면 내용 초기화
       />
 
     ):(
