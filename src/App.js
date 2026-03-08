@@ -7,6 +7,8 @@ import Input from './components/input';
 import { images } from './image';
 import IconButton from './components/IconButton';
 import Task from './components/Task';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppLoading from 'expo-app-loading';
 
 //SafeAreaView 아이폰 노치 가려짐 대비 - 자동 패딩값 적용됨
 const Container = styled.SafeAreaView`
@@ -29,6 +31,8 @@ const List = styled.ScrollView`
 `;
 
 export default function App() {
+
+  const [isReady, setIsReady] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [tasks, setTasks] = useState({
     // '1':{id:'1', text: 'woosin1', completed:false},
@@ -36,6 +40,20 @@ export default function App() {
     // '3':{id:'3', text: 'woosin3', completed:false},
     // '4':{id:'4', text: 'woosin4', completed:false},
   });
+
+  const _saveTasks = async tasks => {//데이터 저장하기 -> 비동기로 진행
+    try {
+      await AsyncStorage.setItem('task',JSON.stringify(tasks));
+      setTasks(tasks);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const _loadTasks = async () => {//데이터 불러오기
+    const loadedTasks = await AsyncStorage.getItem('tasks');
+    setTasks(JSON.parse(loadedTasks || '{}'));
+  }
+
   const _addTask = () => {
     // alert(`Add: ${newTask}`);
     const ID = Date.now().toString();
@@ -43,22 +61,26 @@ export default function App() {
       [ID]: {id:ID, text:newTask, completed:false}
     }
     setNewTask('');// input에 작성한 newTask를 다시 빈값으로 초기화
-    setTasks({...tasks, ...newTaskObject});
+    //setTasks({...tasks, ...newTaskObject});
+    _saveTasks({...tasks, ...newTaskObject});
   };
   const _deleteTask = id => {
     const currentTasks = Object.assign({},tasks); //assign(대상객체,복사할개체)
     delete currentTasks[id]; //복사한 task객체에서 해당 id를 가진 리스트 삭제
-    setTasks(currentTasks); //task에 새로 만든 currentTasks 세팅
+    //setTasks(currentTasks); //task에 새로 만든 currentTasks 세팅
+    _saveTasks(currentTasks);
   };
   const _toggleTask = id => {
     const currentTasks = Object.assign({},tasks);
     currentTasks[id]['completed'] = !currentTasks[id]['completed']; //특정 id의 completed 값을 뒤집음
-    setTasks(currentTasks);
+    // setTasks(currentTasks);
+    _saveTasks(currentTasks);
   }
   const _updateTask = item => {
     const currentTasks = Object.assign({},tasks);
     currentTasks[item.id] = item; 
-    setTasks(currentTasks);
+    //setTasks(currentTasks);
+    _saveTasks(currentTasks);
   }
   const _handleTextChange = text => {
     setNewTask(text);
@@ -68,7 +90,7 @@ export default function App() {
   }
 
   const width = Dimensions.get('window').width;
-  return (
+  return isReady ? (
     <ThemeProvider theme={theme}>
       <Container>
         {/* StatusBar 안드로이드 상태바 기려짐 대비 - 상태바 제어 가능하게 함 */}
@@ -99,5 +121,11 @@ export default function App() {
         <IconButton type={images.update}/> */}
       </Container>
     </ThemeProvider>
+  ) : (
+    <AppLoading // false면 기본 로딩
+      startAsync = {_loadTasks}
+      onFinish={() => setIsReady(true)}
+      onError={console.error}
+    />
   );
 }
